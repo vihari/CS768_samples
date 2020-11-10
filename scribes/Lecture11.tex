@@ -1,0 +1,208 @@
+\documentclass{article}
+\setlength{\oddsidemargin}{0.25 in}
+\setlength{\evensidemargin}{-0.25 in}
+\setlength{\topmargin}{-0.6 in}
+\setlength{\textwidth}{6.5 in}
+\setlength{\textheight}{8.5 in}
+\setlength{\headsep}{0.75 in}
+\setlength{\parindent}{0 in}
+\setlength{\parskip}{0.1 in}
+
+\usepackage{amsmath,amsfonts,graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\newcounter{lecnum}
+\renewcommand{\thepage}{\thelecnum-\arabic{page}}
+\renewcommand{\thesection}{\thelecnum.\arabic{section}}
+\renewcommand{\theequation}{\thelecnum.\arabic{equation}}
+\renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
+\renewcommand{\thetable}{\thelecnum.\arabic{table}}
+
+%
+% The following macro is used to generate the header.
+%
+\newcommand{\lecture}[4]{
+   \pagestyle{myheadings}
+   \thispagestyle{plain}
+   \newpage
+   \setcounter{lecnum}{#1}
+   \setcounter{page}{1}
+   \noindent
+   \begin{center}
+   \framebox{
+      \vbox{\vspace{2mm}
+    \hbox to 6.28in { {\bf CS 768: Learning With Graphs
+        \hfill Autumn 2020-2021} }
+       \vspace{4mm}
+       \hbox to 6.28in { {\Large \hfill Lecture #1: #2  \hfill} }
+       \vspace{2mm}
+       \hbox to 6.28in { {\it Instructor: Prof. Abir De \hfill Scribe: #4} }
+      \vspace{2mm}}
+   }
+   \end{center}
+   \markboth{Lecture #1: #2}{Lecture #1: #2}
+}
+
+%Use this command for a figure; it puts a figure in wherever you want it.
+%usage: \fig{NUMBER}{SPACE-IN-INCHES}{CAPTION}
+\newcommand{\fig}[3]{
+            \vspace{#2}
+            \begin{center}
+            Figure \thelecnum.#1:~#3
+            \end{center}
+    }
+% Use these for theorems, lemmas, proofs, etc.
+\newtheorem{theorem}{Theorem}[lecnum]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newenvironment{proof}{{\bf Proof:}}{\hfill\rule{2mm}{2mm}}
+
+% **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
+\newcommand{\Sim}{\text{sim}}
+
+\begin{document}
+
+\lecture{11}{Collaborative Filtering}{}{Soumya Chatterjee}
+
+\section{Recommendation Systems}
+% \subsection{Types of Recommendation Systems}
+% \begin{itemize}
+%     \item Editorial and hand curated. Eg. Editor's choice
+%     \item Simple Aggregates. Eg. Most popular, top 10
+%     \item Tailored to individual users. Eg. Amazon, Netflix
+% \end{itemize}
+
+\subsection{Formal Model}
+\begin{itemize}
+    \item $C$ is the set of customers
+    \item $S$ is the set of items
+    \item Utility function $u:\:C\times S \rightarrow R$
+    \begin{itemize}
+        \item $R$ is the set of ratings
+        \item $R$ is totally ordered
+        \item Eg. 0-5 star ratings, real number in $[0,1]$
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Utility Matrix}
+\begin{tabular}{l|llll}
+      & Avatar & LOTR & Matrix & Pirates \\ \hline
+Alice & 1      &      & 0.2    &         \\
+Bob   &        & 0.5  &        & 0.3     \\
+Carol & 0.2    &      & 1      &         \\
+David &        &      &        & 0.4    
+\end{tabular}
+
+Utility Matrix are generally sparse. Recommender systems try to predict these missing values.
+
+\subsection{Key Problems}
+\begin{enumerate}
+    \item Gathering known ratings for utility matrix
+    \begin{itemize}
+        \item Explicit - Ask people to rate items. Is simple and gives good quality data but does not scale. Most people do not leave ratings or reviews.
+        \item Implicit - Learn ratings from user actions. Is much more scalable but knowing low ratings is difficult with implicit methods
+        \item Generally a combination is used
+    \end{itemize}
+    \item Extrapolate unknown ratings from the known ones. Mainly the high rating
+    \begin{itemize}
+        \item Key problem here is the fact that $U$ is sparse
+        \item There is also a cold start problem with new users/items
+    \end{itemize}
+    \item Evaluating extrapolation methods
+\end{enumerate}
+
+\section{Content-based Recommender Systems}
+\textbf{Main idea:} Recommend items to customer $x$ similar to previous items rated highly be $x$
+
+\textbf{Item Profile:} For each item, an item profile is created which is a set of features for that item. For example, for recommending news articles, TF-IDF features can be used.
+
+\textbf{TF-IDF}
+
+Let $f_{ij}$ be the frequency of term $i$ in document $j$. The term frequecy $TF_{ij}$ is given by $$TF_{ij} = \frac{f_{ij}}{\max_k f_{kj}}$$
+Now, if $n_i$ documents contain the term $i$ and $N$ is the total number of documents, the inverse document frequency of term $i$ is given by $$IDF_i = \log\frac{N}{n_i}$$
+Using these, the TF-IDF score of term $i$ in document $j$ is given by $$w_{ij} = TF_{ij} \times IDF_i$$
+
+\textbf{User Profiles:} can be constructed by using a weighted average of the item profiles of the items the user has rated where the weight is the rating given to that item. A variant of this is to normalize the weights by the average rating of the user.
+
+\textbf{Making predictions:} 
+The similarity between user with user profile $\mathbf{x}$ and item with profile $\mathbf{i}$ is given by the cosine similarity $U(\mathbf{x},\mathbf{i}) = \frac{\mathbf{x}\cdot\mathbf{i}}{|\mathbf{x}|\,|\mathbf{i}|}$. For an user, find the cosine similarity with all products and recommend those with high similarity.
+
+\textbf{Pros:} (1) Data from other users not needed; (2) Able to recommend to users with unique tastes; (3) Able to recommend new and unpopular items; (4) Can provide explanations for recommendations
+
+\textbf{Cons:} (1) Finding appropriate features is hard; (2) Overspecialization - never recommends items outside user's profile; (3) Cold-start for new users - no user profile for new users
+
+\section{Collaborative Filtering}
+\subsection{Main Idea} 
+
+Consider user $x$ who has rated some items. Now, find the set $N$ of top-$k$ other users whose ratings are \textit{similar} to $x$'s ratings. $x$'s ratings for other items can be estimated based on rating of users in $N$.
+
+\subsection{Similarity between users}
+
+For doing this, we need to define similarity $\Sim(x, y)$ between users $x$ and $y$ with rating vectors $r_x$ and $r_y$. The rating vector $r_x$ contains the ratings given by user $x$ to all the items in the catalog.
+
+We want $\Sim$ to capture the intuition that if two users have similar ratings for some items, they will have higher $\Sim$ values than two user with dissimilar rating for some items. Choices for $\Sim$ function are as follows:
+
+\begin{itemize}
+    \item Jaccard Similarity: $\Sim(A,B) = \frac{|r_A\,\cap\,r_B|}{|r_A\,\cup\,r_B|}$\\
+    The problem with this is that it completely ignores ratings
+    \item Cosine similarity: $\Sim(A, B) = \cos(r_A, r_b)$ \\
+    \indent To calculate this, we need to fill in missing values in the rating vectors. We can fill all of them with 0. But this leads to the following issue.\\
+    Consider that all the rating vectors have values in $[0,5]$ (say). Now, since rating vectors are generally sparse, any pair of vectors will have lots of zeros and thus, very close $\Sim$ values.
+    \item Centered cosine or Pearson Correlation:\\
+    Change the $0$-filled rating vectors in cosine similarity by normalizing by subtracting means from each rating vector. Thus the average rating of each user is made $0$. \\
+    This definition captures the intuition better by treating missing ratings as \textit{average} and not negative.\\
+    It also helps is handling differences between \textit{tough raters} and \textit{easy raters} via the mean normalization.
+\end{itemize}
+
+\subsection{Making Rating Predictions}
+Let $r_x$ be the rating vector of user $x$. Say we want to predict the rating user $x$ give to item $i$. For this consider the set $N$ of $k$ users most similar to $x$ who have rated item $i$. The prediction for user $x$'s rating for item $i$ can given by $$r_{xi} = \frac{\sum_{y\in N} \Sim(x,y) \cdot r_{yi}}{\sum_{y \in N} \Sim(x,y)}$$
+
+\subsection{Another view: Item-Item Collaborative Filtering}
+The above discussed method is called User-User Collaborative Filtering. A dual method is called Item-Item Collaborative Filtering in which, for predicting the rating user $x$ will give to item $i$, we find the set $N(i;x)$ of top $k$ other similar items rated by $x$ and then estimate rating for item $i$ based on ratings for similar items \textit{i.e.}
+$$ r_{xi} = \frac{\sum_{j\in N(i;x)} \Sim(i,j) \cdot r_{xj}}{\sum_{j\in N(i;x)} \Sim(i,j)}$$
+Here the feature vector for item $i$ is the collection of ratings given by different users to this item.
+
+\subsection{Item-Item vs User-User}
+In theory, user-user and item-item are dual approaches but in practice, item-item outperforms user-user in many use cases.
+
+This is because items are \textit{simpler} than users. Items belong to to a small set of genres but users can have varied tastes across genres. Thus item similarity is more meaningful than user similarity.
+
+\subsection{Complexity}
+Most expensive step is finding $k$ most similar users (or items). For each user this is $O(|U|)$ where $U$ is the utility matrix. We could precompute the neighbours $N$ for each user but this too takes a $O(n\cdot|U|)$ time which is again quite expensive.
+
+This can be avoided by doing near-neighbour search in high dimensions (\href{https://en.wikipedia.org/wiki/Locality-sensitive_hashing}{Locality Sensitive Hashing}), or clustering and then finding neighbours within clusters, or dimensionality reduction.
+
+\subsection{Pros and Cons}
+\textbf{Pros:} (1) Works for any kind of item since no feature selection is needed
+
+\textbf{Cons:} 
+\begin{enumerate}[label=(\arabic*), topsep=0in]
+\item Cold start: Need enough users in the system to find a match
+\item Sparsity: Since the user/ratings matrix is sparse, it is hard to find users who have rated the same items
+\item First rater problem: Cannot recommend an unrated item (eg. new items and esoteric items)
+\item Popularity bias: Tends to recommend popular items since they will occur in neighbourhoods of many items
+\end{enumerate}
+
+\section{Hybrid Methods}
+\begin{itemize}
+    \item Add content-based methods to collaborative filtering: Item profiles can be used to overcome new item problem, and demographics can be used to deal with new user problem
+    \item Implement two or more different recommenders and combine predictions (possibly using a linear model). \textit{E.g.}, global baseline + collaborative filtering
+\end{itemize}
+
+\subsection{Global Baseline Estimate}
+Suppose that user $x$ has rated no item similar to item $i$. So $N$ is empty and no prediction can be made about $x$'s rating for $i$ using collaborative filtering.
+
+We could however predict $x$'s rating for $i$ as follows: 
+
+Let the mean rating of all the items be $\mu$. Let the rating deviation of user $x$ be $b_x$ (avg. rating given by user $x$ - $\mu$) and rating deviation of item $i$ be $b_i$. We could estimate user $x$'s rating of $i$ as 
+$$b_{xi} = \mu + b_x + b_i$$
+
+\subsection{Combining Global Baseline with Collaborative Filtering}
+This method uses a global baseline estimate with a collaborative filtering refinement term as follows
+$$r_{xi} = b_{xi} + \frac{\sum_{j\in N(i;x)} \Sim(i,j) \cdot (r_{xj} - b_{xj})}{\sum_{j\in N(i;x)} \Sim(i,j)}$$
+
+\end{document}
