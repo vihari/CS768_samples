@@ -116,7 +116,7 @@ Utility Matrix are generally sparse. Recommender systems try to predict these mi
 \end{enumerate}
 
 \section{Content-based Recommender Systems}
-\textbf{Main idea:} Recommend items to customer $x$ similar to previous items rated highly be $x$
+\textbf{Main idea:} Recommend items to customer $x$ similar to previous items rated highly by $x$
 
 \textbf{Item Profile:} For each item, an item profile is created which is a set of features for that item. For example, for recommending news articles, TF-IDF features can be used.
 
@@ -126,7 +126,7 @@ Let $f_{ij}$ be the frequency of term $i$ in document $j$. The term frequecy $TF
 Now, if $n_i$ documents contain the term $i$ and $N$ is the total number of documents, the inverse document frequency of term $i$ is given by $$IDF_i = \log\frac{N}{n_i}$$
 Using these, the TF-IDF score of term $i$ in document $j$ is given by $$w_{ij} = TF_{ij} \times IDF_i$$
 
-\textbf{User Profiles:} can be constructed by using a weighted average of the item profiles of the items the user has rated where the weight is the rating given to that item. A variant of this is to normalize the weights by the average rating of the user.
+\textbf{User Profiles:} can be constructed by using a weighted average of the item profiles of the items the user has rated where the weight is the rating given to that item. A variant of this is to mean normalize the weights by the average rating of the user.
 
 \textbf{Making predictions:} 
 The similarity between user with user profile $\mathbf{x}$ and item with profile $\mathbf{i}$ is given by the cosine similarity $U(\mathbf{x},\mathbf{i}) = \frac{\mathbf{x}\cdot\mathbf{i}}{|\mathbf{x}|\,|\mathbf{i}|}$. For an user, find the cosine similarity with all products and recommend those with high similarity.
@@ -172,7 +172,7 @@ In theory, user-user and item-item are dual approaches but in practice, item-ite
 This is because items are \textit{simpler} than users. Items belong to to a small set of genres but users can have varied tastes across genres. Thus item similarity is more meaningful than user similarity.
 
 \subsection{Complexity}
-Most expensive step is finding $k$ most similar users (or items). For each user this is $O(|U|)$ where $U$ is the utility matrix. We could precompute the neighbours $N$ for each user but this too takes a $O(n\cdot|U|)$ time which is again quite expensive.
+Most expensive step is finding $k$ most similar users (or items). For each user this is $O(|U|)$ where $U$ is the utility matrix. We could precompute the neighbours $N$ for each user but this too takes a $O(k\cdot|U|)$ time which is again quite expensive.
 
 This can be avoided by doing near-neighbour search in high dimensions (\href{https://en.wikipedia.org/wiki/Locality-sensitive_hashing}{Locality Sensitive Hashing}), or clustering and then finding neighbours within clusters, or dimensionality reduction.
 
