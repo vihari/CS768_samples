@@ -1,0 +1,260 @@
+\documentclass{article}
+\setlength{\oddsidemargin}{0.25 in}
+\setlength{\evensidemargin}{-0.25 in}
+\setlength{\topmargin}{-0.6 in}
+\setlength{\textwidth}{6.5 in}
+\setlength{\textheight}{8.5 in}
+\setlength{\headsep}{0.75 in}
+\setlength{\parindent}{0 in}
+\setlength{\parskip}{0.1 in}
+
+\usepackage{amsmath,amsfonts,graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\newcounter{lecnum}
+\renewcommand{\thepage}{\thelecnum-\arabic{page}}
+\renewcommand{\thesection}{\thelecnum.\arabic{section}}
+\renewcommand{\theequation}{\thelecnum.\arabic{equation}}
+\renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
+\renewcommand{\thetable}{\thelecnum.\arabic{table}}
+
+%
+% The following macro is used to generate the header.
+%
+\newcommand{\lecture}[4]{
+   \pagestyle{myheadings}
+   \thispagestyle{plain}
+   \newpage
+   \setcounter{lecnum}{#1}
+   \setcounter{page}{1}
+   \noindent
+   \begin{center}
+   \framebox{
+      \vbox{\vspace{2mm}
+    \hbox to 6.28in { {\bf CS 768: Learning With Graphs
+        \hfill Autumn 2020-2021} }
+       \vspace{4mm}
+       \hbox to 6.28in { {\Large \hfill Lecture #1: #2  \hfill} }
+       \vspace{2mm}
+       \hbox to 6.28in { {\it Instructor: Prof. Abir De \hfill Scriber: #4} }
+      \vspace{2mm}}
+   }
+   \end{center}
+   \markboth{Lecture #1: #2}{Lecture #1: #2}
+}
+
+% \documentclass[12pt]{article}
+% \PassOptionsToPackage{hyphens}{url}
+% \usepackage[utf8]{inputenc}
+% \usepackage[T1]{fontenc}
+% \usepackage{graphicx}
+% \usepackage{grffile}
+% \usepackage{longtable}
+% \usepackage{wrapfig}
+% \usepackage{rotating}
+% \usepackage[normalem]{ulem}
+% \usepackage{amsmath}
+% \usepackage{textcomp}
+% \usepackage{amssymb}
+% \usepackage{capt-of}
+\usepackage{hyperref}
+% \usepackage[margin=1.5in]{geometry}
+% % \renewcommand{\familydefault}{\sfdefault} % Sans fonts
+\usepackage{xcolor} % colored links instead of boxed
+\hypersetup{
+  colorlinks,
+  linkcolor={red!50!black},
+  citecolor={blue!50!black},
+  urlcolor={blue!80!black}
+}
+% \usepackage{enumitem} % line spacing between list items
+% \setlist{nosep}
+% \setcounter{secnumdepth}{0} % disable numbering
+% \usepackage{parskip} % paragraph spacing
+% \renewcommand{\hat}{\widehat}
+% % \geometry{a5paper,14pt}
+% % \everymath{\mathsf{\xdef\mysf{\mathgroup\the\mathgroup\relax}}\mysf}
+% \author{shubhamkar,shrutesh}
+% \date{\today}
+% \title{}
+\begin{document}
+
+\lecture{13}{Graph Convolutional Networks}{}{Shrutesh Patil, Shubhamkar Ayare}
+
+\section{Introduction}
+
+Consider a node \emph{u}. We'd like to learn its embedding \emph{x\(_{\text{u}}\) = f(\ldots{})} (final \emph{NN} below), the peculiarity being that we'd like the embedding to be such that we aren't required to change the model when a new node comes into picture. Such a model is known as \emph{inductive model}.
+
+To do this, with \emph{f\(_{\text{u}}\)} as the inherent features\footnote{In Knowledge Graphs, inherent features could mean pre-trained embedding vectors; in Social Networks, they could be gender, location, etc} of the node, consider
+
+\begin{center}
+\(\displaystyle
+\begin{aligned}
+x'_u(0) &= W_0f_u \\
+x'_u(1) &= g_1 \left[x'_u(0) \odot g_2 \left(\sum_{v \in N(u)} x_v'(0) \right) \right]\\
+. & \\
+. & \\
+. & \\
+x'_u(k+1) &= g_1\left[x'_u(k) \odot g_2 \left(\sum_{v \in N(u)} x_v'(k) \right) \right]
+\end{aligned}\) 
+\end{center}
+
+Notice the recursive formulation of the x'\(_{\text{u}}\)(i)'s above. This constitutes the most generic form of \emph{Graph Convolutional Network}, as also the most rudimentary form of \emph{Graph Neural Network}.
+
+Here, g\(_{\text{1}}\), g\(_{\text{2}}\) and NN are just non-linearities. g\(_{\text{1}}\), g\(_{\text{2}}\) need not be the same for each "hop" - these could very well have been \(g_1^{(1)}\), \(g_1^{(2)}\), etc. These g\(_{\text{1}}\), g\(_{\text{2}}\) could also have been set from the outside. The formulation itself is independent of the number of nodes or edges of the graph. The operator '\(\odot\)' too may vary from formulation-to-formulation.
+
+The \emph{number of hops} (k) constitutes a hyper-parameter.
+
+As an exercise\footnote{Solution to the exercise: g\(_{\text{1}}\) is the Identity operation, '\(\odot\)' is '+', g\(_{\text{2}}\) is multiplication by matrix A}, find the choices of g\(_{\text{1}}\), g\(_{\text{2}}\) and \(\odot\), so that the above can be reduced to page-rank type formulation below. Consider A to be a matrix
+
+\begin{center}
+\(\displaystyle x'_u(k+1) = x'_u(k) + \gamma A \left(\sum_{v \in N(u)} x'_v(k) \right)\)
+\end{center}
+
+And while for page-rank, one'd expect the embedding size to depend on the size of the graph, in general, we'd like the embeddings to be a compressed representative of that information with a smaller overall size.
+
+With the n steps/hops, this yields us \emph{n} embeddings: (x'\(_{\text{u}}\)(1), x'\(_{\text{u}}\)(2), \ldots{}, x'\(_{\text{u}}\)(n)). These can be passed into a final output layer to obtain the final embedding 
+
+\begin{center}
+\(x_u = NN(x'_u(1), ..., x'_u(n))\)
+\end{center}
+
+g\(_{\text{1}}\) and g\(_{\text{2}}\) may be chosen such that this results in a \emph{Linear--RELU--Linear} formulation. This constitutes a \emph{universal function approximator}. (The \emph{linear} itself may comprise of several layers.)
+
+To actually find NN, we note that it should be such that x\(_{\text{u}}\) should be rendered permutation invariant.
+
+\section{Learning the embedding function: generative method}
+\label{sec:orga6edc01}
+
+In order to compute x\(_{\text{u}}\), we need to learn NN, \(\{g_1^{\cdot}\}\), \(\{g_2^{\cdot}\}\). We need a loss function. For this, we have several choices.
+
+\begin{itemize}
+\item We can use a classifier model, so that \(x_u^T x_v \rightarrow +/- 1\)
+\item Shortest path distances
+\item Generative Model
+\end{itemize}
+
+Here we discuss the last option. Consider
+
+\begin{center}
+\(P(e | x_u, x_v) = \sigma(x_u^T x_v)\)
+\end{center}
+
+So that
+
+\begin{center}
+\(\displaystyle P(G | \{x_u\}, \{x_v\}) = \prod_{(u,v)\in E} \sigma(x_u^T x_v) \prod_{(u,v)\notin E} (1 - \sigma(x_u^T x_v))\)
+\end{center}
+
+In logarithmic form,
+
+\begin{center}
+\(\displaystyle \log P(G | \{x_u\}, \{x_v\}) = \sum_{(u,v)\in E} \log \sigma(x_u^T x_v) \sum_{(u,v)\notin E} \log (1 - \sigma(x_u^T x_v))\)
+\end{center}
+
+However, with this, the time complexity quickly becomes impractical\footnote{The naive formulation of \(P(G | \{x_u\}, \{x_v\})\) requires \(O(|V|^{\text{2}})\) computation time. For realistic graphs, \(E = O(|V|)\), and so  it might be possible to avoid \(O(|V|^{\text{2}})\) using approximations.}. To reduce this complexity, we make the loss function depend only on the likelihood of edges, and not on the non-edges.
+
+Consider a graph with 3 edges labelled 1,2,3 generated in that temporal order\footnote{So, the edge labelled 1 is the very first edge, then the edge labelled 2 appears, and then finally the edge labelled 3 appears.}; note that
+
+\begin{center}
+\(\displaystyle P(1,2,3) = P(3 | 1, 2) P(2 | 1) P(1)\)
+\end{center}
+
+This requires just \(O(|E|)\) computation time. 
+
+However, this is order-dependent, and we would like to make it order-independent\footnote{Two isomorphic graphs\footnotemark with edge sets \{ab, bc, cd, da, ac\} and \{ab, bc, cd, da, bd\} and common node set \{a, b, c, d\} should have the same probability\footnotemark; however, our current model does not necessarily awards them same probabilities}\footnotetext[6]{\label{org851255c}See \url{https://www.math.upenn.edu/\~mlazar/math170/notes05-2.pdf} for examples of isomorphic graphs}\footnotetext[7]{\label{org3d5567a}Also, P(3|1,2) = P(3|2,1); our embeddings are order-independent.}. 
+
+To do this, we consider the average over all-possible permutations S\(_{\text{i}}\) of the edges; let
+
+\begin{itemize}
+\item \(\mathbb P(E)\) denote the set of all permutations of the edges in edge-set E; an example of a permutation is the sequence S\(_{\text{1}}\) = \{e\(_{\text{1}}\), \ldots{}, e\(_{|E|}\)\}.
+\item P(S\(_{\text{i}}\)) denote the probability of the graph generated according to the sequence S\(_{\text{i}}\)
+\item Prior(S\(_{\text{i}}\)) be the probability of sequence S\(_{\text{i}}\) from \(\mathbb P(S_i)\) sampled uniformly using BFS/DFS
+\end{itemize}
+
+so that the required average is
+
+\begin{center}
+\(\displaystyle \frac {1}{|\mathbb P(S)|} \sum_{S_i \in \mathbb P(E)} {P(S_i)}\)
+\end{center}
+
+or
+
+\begin{center}
+\(\displaystyle P(G) = \mathop{\mathbb E}_{S_i \sim Uniform(\mathbb P(E))} \left[P(S_i) \right]\)
+\end{center}
+
+However, this itself does not reduce the complexity. To reduce the complexity, we incorporate sampling, and obtain the expectation over, say, only 10 to 15 samples. In essence,
+
+\begin{center}
+\(\displaystyle
+\begin{aligned}
+P(G) &= \sum_{S_i} P(G|S_i) Prior(S_i) \\
+&= \sum_{S_i} P(S_i) Prior(S_i) \\
+&= \mathop{\mathbb E}_{S_i \sim Uniform(\mathbb P(E))} \left[ P(S_i) \right]
+\end{aligned}\)
+\end{center}
+
+To compute
+
+\begin{center}
+P(S\(_{\text{i}}\)) = P(e\(_{\text{1}}\), \ldots{}, e\(_{\text{n}}\)) = P(e\(_{\text{n}}\) | e\(_{\text{1}}\), \ldots{}, e\(_{\text{n-1}}\)) P(e\(_{\text{n-1}}\) | \ldots{}) \ldots{}
+\end{center}
+
+with \(e_{n-1} = (u, v)\), note that
+
+\begin{center}
+\(\displaystyle P(e_{n-1} | e_1 ... e_{n-2}) = \frac {\sigma(x_u^T x_v)} {\sum_{w \in \{w | (u,w) \notin \{e_1, ..., e_{n-2}\}\}} \sigma(x_u^T x_w)}\)
+\end{center}
+
+However, this still takes O(|V|) for each edge, with \(O(\eta|E||V|)\) as the overall complexity for \(\eta\) samples.
+
+To actually reduce the complexity, we only consider \((u,v) \in N(u) \setminus {e_1,...,e_{n-2}}\). Observe that the complexity then becomes \(O(d_{\text{max}})\) for each edge with \(O(\eta d_{max} |E|)\) as the overall complexity. (d is the degree of the node.)
+
+\section{Generating a new graph from the learnt model}
+\label{sec:org3b319fb}
+
+Next, we wish to generate a graph from the learnt parameters \{g\(_{\text{1}}\), g\(_{\text{2}}\), NN\}. 
+
+We do this incrementally starting from, say, node labelled 0 using a multinomial distribution. So, for the first edge, we use the multinomial distribution
+
+\begin{center}
+\(\displaystyle \left\{ \frac {\sigma(x_0^T x_i)} {\sum_{i \neq 0} \sigma(x_0^T x_i)} \right\}_{i \neq 0}\)
+\end{center}
+
+Once the first edge is generated, we update the embedding x\(_{\text{0}}\) of the node labelled 0.
+
+For the second edge, we use the distribution
+
+\begin{center}
+\(\displaystyle \left\{ \frac {\sigma(x_1^T x_i)} {\sum_{i \neq 0,1} \sigma(x_1^T x_i)} \right\}_{i \neq 0, 1}\)
+\end{center}
+
+And so on.
+
+To incorporate noise, consider that the actual embedding z\(_{\text{u}}\) is close to the embedding x\(_{\text{u}}\) output by the GCN but not exactly x\(_{\text{u}}\): \(z_u \sim \mathcal N(x_u, \sigma(x_u))\). And so, the edge probability weights are \(\sigma(z_u^T z_v)\) rather than \(\sigma(x_u^T x_v)\). In this case, see that the probability of the graph is
+
+\begin{center}
+\(\displaystyle P(G) =  \sum_{z|x} P(G|z) P(z|x) = \mathop {\mathbb E}_{z|x} [P(G|z)]\) 
+\end{center}
+
+However, there are \(|V|\) z's. To avoid this, we use sampling; and then our problem concerns maximizing
+
+\begin{center}
+\(\displaystyle \log \mathop {\mathbb E}_{z|x} [P(G|z)] = \log \left( \frac 1{\eta} \sum_{z_i \sim \mathcal N(...)} P(G|z) \right)\)
+\end{center}
+
+But, because \(\log\) is concave\footnote{Refer midsem question 2, or equivalently the \href{https://en.wikipedia.org/wiki/Jensen\%2527s\_inequality}{Jensen's inequality}}, we have
+
+\begin{center}
+\(\displaystyle \log \mathop {\mathbb E}_{z|x} [P(G|z)] \geq \mathop {\mathbb E}_{z|x} \log P(G|z)\)
+\end{center}
+
+And then, this can be simplified to
+
+\begin{center}
+\(\displaystyle \mathop {\mathbb E}_{z|x} \log P(G|z)
+= \mathop {\mathbb E}_{z|x} \left[ \sum_{i \in |E|} \log P(e_i | e_1, ..., e_{i-1}) \right]\)
+\end{center}
+\end{document}
